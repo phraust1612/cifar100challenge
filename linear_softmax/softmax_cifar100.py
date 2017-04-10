@@ -2,7 +2,6 @@ import sys
 import numpy as np
 import pickle
 import tensorflow as tf
-tf.set_random_seed(777)
 
 f = open("../data/train","rb")
 dic = pickle.load(f,encoding="bytes")

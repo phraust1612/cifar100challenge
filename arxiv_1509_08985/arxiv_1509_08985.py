@@ -2,7 +2,6 @@ import sys
 import numpy as np
 import pickle
 import tensorflow as tf
-tf.set_random_seed(777)
 
 f = open("../data/train","rb")
 dic = pickle.load(f,encoding="bytes")
@@ -89,6 +88,12 @@ W12 = tf.Variable(tf.random_normal([4096,100]),name="W12")
 b12 = tf.Variable(tf.random_normal([100]),name="b12")
 L12 = tf.matmul(L11,W12)+b12
 
+correct_prediction = tf.equal(tf.argmax(L12, 1), tf.argmax(y, 1))
+accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=L12,labels=y))
+optimizer = tf.train.AdamOptimizer(learning_rate=h).minimize(loss)
+
 tf.add_to_collection("vars",W1)
 tf.add_to_collection("vars",W2)
 tf.add_to_collection("vars",W3)
@@ -101,15 +106,9 @@ tf.add_to_collection("vars",W11)
 tf.add_to_collection("vars",W12)
 tf.add_to_collection("vars",b12)
 
-loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=L12,labels=y))
-optimizer = tf.train.AdamOptimizer(learning_rate=h).minimize(loss)
-
-correct_prediction = tf.equal(tf.argmax(L12, 1), tf.argmax(y, 1))
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
 saver = tf.train.Saver()
 
-sess = tf.Session()
+sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
 sess.run(tf.global_variables_initializer())
 
 try:
