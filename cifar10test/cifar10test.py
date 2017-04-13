@@ -3,9 +3,24 @@ import numpy as np
 import pickle
 import tensorflow as tf
 
-f = open("../data/train","rb")
-dic = pickle.load(f,encoding="bytes")
+f = open("/data/data_batch_1","rb")
+dic1 = pickle.load(f,encoding="bytes")
 f.close()
+f = open("/data/data_batch_2","rb")
+dic2 = pickle.load(f,encoding="bytes")
+f.close()
+f = open("/data/data_batch_3","rb")
+dic3 = pickle.load(f,encoding="bytes")
+f.close()
+f = open("/data/data_batch_4","rb")
+dic4 = pickle.load(f,encoding="bytes")
+f.close()
+f = open("/data/data_batch_5","rb")
+dic5 = pickle.load(f,encoding="bytes")
+f.close()
+dic = dic1
+dic[b'data'] = dic1[b'data']+dic2[b'data']+dic3[b'data']+dic4[b'data']+dic5[b'data']
+dic[b'labels'] = dic1[b'labels']+dic2[b'labels']+dic3[b'labels']+dic4[b'labels']+dic5[b'labels']
 
 h=0.001
 epoch=100
@@ -139,7 +154,7 @@ for i in range(epoch):
 	avg_loss = 0
 	for j in range(total_batch):
 		batch_x = np.array(dic[b'data'][j*100:(j+1)*100])
-		batch_y = np.array(dic[b'fine_labels'][j*100:(j+1)*100])
+		batch_y = np.array(dic[b'labels'][j*100:(j+1)*100])
 		batch_y = np.eye(100)[batch_y]
 		batch_y.transpose()
 		tmpdic = {x:batch_x,y:batch_y,tf_drop:drop_rate}
@@ -150,7 +165,7 @@ for i in range(epoch):
 print("learning finished")
 
 # Test model and check accuracy
-f=open("../data/test","rb")
+f=open("/data/test_batch","rb")
 testdic=pickle.load(f,encoding="bytes")
 f.close()
 
@@ -158,7 +173,7 @@ total_batch = int(len(testdic[b'data'])/batch_size)
 avg_acc = 0
 for j in range(total_batch):
 	batch_x = np.array(testdic[b'data'][j*100:(j+1)*100])
-	batch_y = np.array(testdic[b'fine_labels'][j*100:(j+1)*100])
+	batch_y = np.array(testdic[b'labels'][j*100:(j+1)*100])
 	batch_y = np.eye(100)[batch_y]
 	batch_y.transpose()
 	c = sess.run(accuracy,feed_dict={x:batch_x,y:batch_y,tf_drop:1})
