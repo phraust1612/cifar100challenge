@@ -7,7 +7,13 @@ f = open("../data/train","rb")
 dic = pickle.load(f,encoding="bytes")
 f.close()
 
-h=0.001
+# Test model and check accuracy
+f=open("../data/test","rb")
+testdic=pickle.load(f,encoding="bytes")
+f.close()
+
+hlist=[0.0001, 0.0125]
+h=0.025
 epoch=100
 batch_size=100
 mix_rate = 0.5
@@ -135,8 +141,11 @@ except:
 	pass
 
 total_batch = int(len(dic[b'data'])/batch_size)
+test_batch = int(len(testdic[b'data'])/batch_size)
+last_acc = 0
 for i in range(epoch):
 	avg_loss = 0
+	avg_acc = 0
 	for j in range(total_batch):
 		batch_x = np.array(dic[b'data'][j*100:(j+1)*100])
 		batch_y = np.array(dic[b'fine_labels'][j*100:(j+1)*100])
@@ -147,20 +156,14 @@ for i in range(epoch):
 		saver.save(sess,default_savefile)
 		avg_loss += c/batch_size
 	print("epoch:",str(i+1),"loss=",str(avg_loss))
+	for j in range(test_batch):
+		batch_x = np.array(testdic[b'data'][j*100:(j+1)*100])
+		batch_y = np.array(testdic[b'fine_labels'][j*100:(j+1)*100])
+		batch_y = np.eye(100)[batch_y]
+		batch_y.transpose()
+		c = sess.run(accuracy,feed_dict={x:batch_x,y:batch_y,tf_drop:1})
+		avg_acc += c/total_batch
+	print('Accuracy:', avg_acc)
+	if last_acc>avg_acc and len(hlist)>0:
+		h = hlist.pop()
 print("learning finished")
-
-# Test model and check accuracy
-f=open("../data/test","rb")
-testdic=pickle.load(f,encoding="bytes")
-f.close()
-
-total_batch = int(len(testdic[b'data'])/batch_size)
-avg_acc = 0
-for j in range(total_batch):
-	batch_x = np.array(testdic[b'data'][j*100:(j+1)*100])
-	batch_y = np.array(testdic[b'fine_labels'][j*100:(j+1)*100])
-	batch_y = np.eye(100)[batch_y]
-	batch_y.transpose()
-	c = sess.run(accuracy,feed_dict={x:batch_x,y:batch_y,tf_drop:1})
-	avg_acc += c/total_batch
-print('Accuracy:', avg_acc)
