@@ -25,18 +25,22 @@ tf_drop = tf.placeholder(tf.float32)
 x_img = tf.reshape(x,[-1,32,32,3])
 
 # standard conv layer w/ 3x3 filters
-W1 = tf.Variable(tf.random_normal([3,3,3,128],stddev=0.01),name="W1")
+W1 = tf.Variable(tf.random_normal([3,3,3,192],stddev=0.01),name="W1")
 L1 = tf.nn.conv2d(x_img,W1,strides=[1,1,1,1],padding="SAME")
 L1 = tf.nn.relu(L1)
 
 # standard conv layer w/ 3x3 filters
-W2 = tf.Variable(tf.random_normal([3,3,128,128],stddev=0.01),name="W2")
+W2 = tf.Variable(tf.random_normal([3,3,192,192],stddev=0.01),name="W2")
 L2 = tf.nn.conv2d(L1,W2,strides=[1,1,1,1],padding="SAME")
 L2 = tf.nn.relu(L2)
 
-# use standard con layer instead of mlp-conv layer
-W3 = tf.Variable(tf.random_normal([3,3,128,128],stddev=0.01),name="W3")
-L3 = tf.nn.conv2d(L2,W3,strides=[1,1,1,1],padding="SAME")
+# mlp-conv layer
+W3_1 = tf.Variable(tf.random_normal([3,3,192,192],stddev=0.01),name="W3_1")
+L3_1 = tf.nn.conv2d(L2,W3_1,strides=[1,1,1,1],padding="SAME")
+L3_1 = tf.nn.relu(L3_1)
+
+W3_2 = tf.Variable(tf.random_normal([1,1,192,96],stddev=0.01),name="W3_2")
+L3 = tf.nn.conv2d(L3_1,W3_2,strides=[1,1,1,1],padding="SAME")
 L3 = tf.nn.relu(L3)
 
 # mix-pooling layer
@@ -46,7 +50,7 @@ L4 = mix_rate*L4_max + (1-mix_rate)*L4_avg
 L4 = tf.nn.dropout(L4,keep_prob=tf_drop)
 
 # standard conv layer w/ 3x3 filters
-W5 = tf.Variable(tf.random_normal([3,3,128,192],stddev=0.01),name="W5")
+W5 = tf.Variable(tf.random_normal([3,3,96,192],stddev=0.01),name="W5")
 L5 = tf.nn.conv2d(L4,W5,strides=[1,1,1,1],padding="SAME")
 L5 = tf.nn.relu(L5)
 
@@ -55,9 +59,13 @@ W6 = tf.Variable(tf.random_normal([3,3,192,192],stddev=0.01),name="W6")
 L6 = tf.nn.conv2d(L5,W6,strides=[1,1,1,1],padding="SAME")
 L6 = tf.nn.relu(L6)
 
-# use standard con layer instead of mlp-conv layer
-W7 = tf.Variable(tf.random_normal([3,3,192,192],stddev=0.01),name="W7")
-L7 = tf.nn.conv2d(L6,W7,strides=[1,1,1,1],padding="SAME")
+# mlp-conv layer
+W7_1 = tf.Variable(tf.random_normal([3,3,192,192],stddev=0.01),name="W7_1")
+L7_1 = tf.nn.conv2d(L6,W7_1,strides=[1,1,1,1],padding="SAME")
+L7_1 = tf.nn.relu(L7_1)
+
+W7_2 = tf.Variable(tf.random_normal([1,1,192,192],stddev=0.01),name="W7_2")
+L7 = tf.nn.conv2d(L7_1,W7_2,strides=[1,1,1,1],padding="SAME")
 L7 = tf.nn.relu(L7)
 
 # mix-pooling layer
@@ -67,24 +75,29 @@ L8 = mix_rate*L8_max + (1-mix_rate)*L8_avg
 L8 = tf.nn.dropout(L8,keep_prob=tf_drop)
 
 # standard conv layer w/ 3x3 filters
-W9 = tf.Variable(tf.random_normal([3,3,192,256],stddev=0.01),name="W9")
+W9 = tf.Variable(tf.random_normal([3,3,192,192],stddev=0.01),name="W9")
 L9 = tf.nn.conv2d(L8,W9,strides=[1,1,1,1],padding="SAME")
 L9 = tf.nn.relu(L9)
 
 # standard conv layer w/ 3x3 filters
-W10 = tf.Variable(tf.random_normal([3,3,256,256],stddev=0.01),name="W10")
+W10 = tf.Variable(tf.random_normal([3,3,192,192],stddev=0.01),name="W10")
 L10 = tf.nn.conv2d(L9,W10,strides=[1,1,1,1],padding="SAME")
 L10 = tf.nn.relu(L10)
 
 # use standard con layer instead of mlp-conv layer
-W11 = tf.Variable(tf.random_normal([3,3,256,256],stddev=0.01),name="W11")
-L11 = tf.nn.conv2d(L10,W11,strides=[1,1,1,1],padding="SAME")
+W11_1 = tf.Variable(tf.random_normal([3,3,192,192],stddev=0.01),name="W11_1")
+L11_1 = tf.nn.conv2d(L10,W11_1,strides=[1,1,1,1],padding="SAME")
+L11_1 = tf.nn.relu(L11_1)
+
+W11_2 = tf.Variable(tf.random_normal([1,1,192,192],stddev=0.01),name="W11_2")
+L11 = tf.nn.conv2d(L11_1,W11_2,strides=[1,1,1,1],padding="SAME")
 L11 = tf.nn.relu(L11)
+
 # 4*4*256 = 4096
-L11 = tf.reshape(L11,[-1,4096])
+L11 = tf.reshape(L11,[-1,3072])
 
 # use FC instead of mlp-conv layer
-W12 = tf.Variable(tf.random_normal([4096,100]),name="W12")
+W12 = tf.Variable(tf.random_normal([3072,100]),name="W12")
 b12 = tf.Variable(tf.random_normal([100]),name="b12")
 L12 = tf.matmul(L11,W12)+b12
 
@@ -96,13 +109,16 @@ optimizer = tf.train.AdamOptimizer(learning_rate=h).minimize(loss)
 
 tf.add_to_collection("vars",W1)
 tf.add_to_collection("vars",W2)
-tf.add_to_collection("vars",W3)
+tf.add_to_collection("vars",W3_1)
+tf.add_to_collection("vars",W3_2)
 tf.add_to_collection("vars",W5)
 tf.add_to_collection("vars",W6)
-tf.add_to_collection("vars",W7)
+tf.add_to_collection("vars",W7_1)
+tf.add_to_collection("vars",W7_2)
 tf.add_to_collection("vars",W9)
 tf.add_to_collection("vars",W10)
-tf.add_to_collection("vars",W11)
+tf.add_to_collection("vars",W11_1)
+tf.add_to_collection("vars",W11_2)
 tf.add_to_collection("vars",W12)
 tf.add_to_collection("vars",b12)
 
