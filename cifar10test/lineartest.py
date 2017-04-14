@@ -94,7 +94,7 @@ last_acc = 0
 for i in range(epoch):
 	avg_loss = 0
 	avg_acc = 0
-	val_acc
+	val_acc=0
 	for j in range(total_batch):
 		batch_x = np.array(dic1[b'data'][j*100:(j+1)*100])
 		batch_y = np.array(dic1[b'labels'][j*100:(j+1)*100])
