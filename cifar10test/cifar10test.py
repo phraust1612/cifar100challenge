@@ -31,7 +31,7 @@ h=0.025
 epoch=100	#default epochs
 batch_size=100
 mix_rate = 0.5
-drop_rate = 0.5
+drop_rate =1.0 
 default_savefile = "model"
 
 # how to run : python3 (this python file name : arxiv~.py) (model name you set) (number of epochs you want)
@@ -54,12 +54,12 @@ L1 = tf.nn.relu(L1)
 # standard conv layer 2
 W2 = tf.Variable(tf.random_normal([3,3,128,128],stddev=0.5),name="W2")
 L2 = tf.nn.conv2d(L1,W2,strides=[1,1,1,1],padding="SAME")
-L3 = tf.nn.relu(L2)
+L2 = tf.nn.relu(L2)
 
 # mlp-conv 1
-#W3 = tf.Variable(tf.random_normal([1,1,128,128],stddev=0.5),name="W3")
-#L3 = tf.nn.conv2d(L2, W3,strides=[1,1,1,1],padding="SAME")
-#L3 = tf.nn.relu(L3)
+W3 = tf.Variable(tf.random_normal([1,1,128,128],stddev=0.5),name="W3")
+L3 = tf.nn.conv2d(L2, W3,strides=[1,1,1,1],padding="SAME")
+L3 = tf.nn.relu(L3)
 
 # mix-pooling layer
 L4_max = tf.nn.max_pool(L3,ksize=[1,3,3,1],strides=[1,3,3,1],padding="SAME")
@@ -75,12 +75,12 @@ L5 = tf.nn.relu(L5)
 # standard conv layer 4
 W6 = tf.Variable(tf.random_normal([3,3,192,192],stddev=0.5),name="W6")
 L6 = tf.nn.conv2d(L5,W6,strides=[1,1,1,1],padding="SAME")
-L7 = tf.nn.relu(L6)
+L6 = tf.nn.relu(L6)
 
 # mlp-conv layer 2
-#W7 = tf.Variable(tf.random_normal([1,1,192,192],stddev=0.5),name="W7")
-#L7 = tf.nn.conv2d(L6,W7,strides=[1,1,1,1],padding="SAME")
-#L7 = tf.nn.relu(L7)
+W7 = tf.Variable(tf.random_normal([1,1,192,192],stddev=0.5),name="W7")
+L7 = tf.nn.conv2d(L6,W7,strides=[1,1,1,1],padding="SAME")
+L7 = tf.nn.relu(L7)
 
 # mix-pooling layer
 L8_max = tf.nn.max_pool(L7,ksize=[1,3,3,1],strides=[1,3,3,1],padding="SAME")
@@ -96,27 +96,29 @@ L9 = tf.nn.relu(L9)
 # standard conv layer 6
 W10 = tf.Variable(tf.random_normal([3,3,256,256],stddev=0.5),name="W10")
 L10 = tf.nn.conv2d(L9,W10,strides=[1,1,1,1],padding="SAME")
-L11 = tf.nn.relu(L10)
+L10 = tf.nn.relu(L10)
 
 # mlp-conv layer 3
-#W11 = tf.Variable(tf.random_normal([1,1,256,256],stddev=0.5),name="W11")
-#L11 = tf.nn.conv2d(L10,W11,strides=[1,1,1,1],padding="SAME")
-#L11 = tf.nn.relu(L11)
+W11 = tf.Variable(tf.random_normal([1,1,256,256],stddev=0.5),name="W11")
+L11 = tf.nn.conv2d(L10,W11,strides=[1,1,1,1],padding="SAME")
+L11 = tf.nn.relu(L11)
 
-# mlp-conv layer 4 for reducing dimension
+# paper introduced 4th mlp-conv layer to reduce dimension but it showed bad performance
 #W12 = tf.Variable(tf.random_normal([1,1,256,16],stddev=0.5),name="W12")
 #L12 = tf.nn.conv2d(L11,W12,strides=[1,1,1,1],padding="SAME")
 #L12 = tf.nn.relu(L12)
+L11 = tf.reshape(L11, [-1,4096])
 
-# 4*4*16 = 256
-W12 = tf.Variable(tf.random_normal([4096,100]),name="W12")
-W12 = tf.Variable(
-L12 = tf.reshape(L11,[-1,4096])
-
-# use FC to let output fits to the number of classes
+# so I used FC instead
 # and divide by sqrt(n/2) according to cs231n.stanford.edu
-W13 = tf.Variable(tf.random_normal([4096,10]),name="W13")
-W13 = W13 / (math.sqrt(5) * 64.0)
+W12 = tf.Variable(tf.random_normal([4096,1024]),name="W12")
+W12 = W12 * math.sqrt(2) / 2048.0
+b12 = tf.Variable(tf.random_normal([1024]),name="b12")
+b12 = b12 * math.sqrt(2) / 32.0
+L12 = tf.matmul(L11,W12)+b12
+
+W13 = tf.Variable(tf.random_normal([1024,10]),name="W13")
+W13 = W13 / (math.sqrt(5) * 32.0)
 b13 = tf.Variable(tf.random_normal([10]),name="b13")
 b13 = b13 / math.sqrt(5)
 L13 = tf.matmul(L12,W13)+b13
@@ -129,15 +131,16 @@ optimizer = tf.train.AdamOptimizer(learning_rate=h).minimize(loss)
 
 tf.add_to_collection("vars",W1)
 tf.add_to_collection("vars",W2)
-#tf.add_to_collection("vars",W3)
+tf.add_to_collection("vars",W3)
 tf.add_to_collection("vars",W5)
 tf.add_to_collection("vars",W6)
-#tf.add_to_collection("vars",W7)
+tf.add_to_collection("vars",W7)
 tf.add_to_collection("vars",W9)
 tf.add_to_collection("vars",W10)
-#tf.add_to_collection("vars",W11)
-#tf.add_to_collection("vars",W12)
+tf.add_to_collection("vars",W11)
+tf.add_to_collection("vars",W12)
 tf.add_to_collection("vars",W13)
+tf.add_to_collection("vars",b12)
 tf.add_to_collection("vars",b13)
 
 saver = tf.train.Saver()
@@ -184,8 +187,8 @@ for i in range(epoch):
 		c,_ = sess.run([loss,optimizer],feed_dict=tmpdic)
 		avg_loss += c/batch_size
 	for j in range(total_batch):
-		batch_x = np.array(dic4[b'data'][j*100:(j+1)*100])
-		batch_y = np.array(dic4[b'labels'][j*100:(j+1)*100])
+		batch_x = np.array(dic5[b'data'][j*100:(j+1)*100])
+		batch_y = np.array(dic5[b'labels'][j*100:(j+1)*100])
 		batch_y = np.eye(10)[batch_y]
 		batch_y.transpose()
 		tmpdic = {x:batch_x,y:batch_y,tf_drop:drop_rate}
@@ -195,8 +198,8 @@ for i in range(epoch):
 
 	print("epoch:",str(i+1),"loss=",str(avg_loss),"h=",h)
 	for j in range(total_batch):
-		batch_x = np.array(dic5[b'data'][j*100:(j+1)*100])
-		batch_y = np.array(dic5[b'labels'][j*100:(j+1)*100])
+		batch_x = np.array(dic4[b'data'][j*100:(j+1)*100])
+		batch_y = np.array(dic4[b'labels'][j*100:(j+1)*100])
 		batch_y = np.eye(10)[batch_y]
 		batch_y.transpose()
 		tmpdic = {x:batch_x,y:batch_y,tf_drop:1}
