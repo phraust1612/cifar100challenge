@@ -14,8 +14,8 @@ testdic=pickle.load(f,encoding="bytes")
 f.close()
 
 # learning rate decays as scheduled in hlist
-hlist=[0.0001, 0.0125]
-h=0.025
+hlist=[0.0001, 0.00125]
+h=0.0025
 epoch=100	#default epochs
 batch_size=100
 mix_rate = 0.5
