@@ -14,8 +14,8 @@ testdic=pickle.load(f,encoding="bytes")
 f.close()
 
 # learning rate decays as scheduled in hlist
-hlist=[0.0001, 0.00125]
-h=0.0025
+hlist=[0.0001, 0.0125]
+h=0.025
 epoch=100	#default epochs
 batch_size=100
 mix_rate = 0.5
@@ -92,17 +92,24 @@ L11 = tf.nn.conv2d(L10,W11,strides=[1,1,1,1],padding="SAME")
 L11 = tf.nn.relu(L11)
 
 # mlp-conv layer 4 for reducing dimension
-W12 = tf.Variable(tf.random_normal([1,1,192,25],stddev=0.5),name="W12")
-L12 = tf.nn.conv2d(L11,W12,strides=[1,1,1,1],padding="SAME")
-L12 = tf.nn.relu(L12)
+#W12 = tf.Variable(tf.random_normal([1,1,192,64],stddev=0.5),name="W12")
+#L12 = tf.nn.conv2d(L11,W12,strides=[1,1,1,1],padding="SAME")
+#L12 = tf.nn.relu(L12)
+#L12 = tf.reshape(L12,[-1,1024])
+L11 = tf.reshape(L11, [-1,3072])
 
-# 4*4*25 = 400
-L12 = tf.reshape(L12,[-1,400])
+# paper introduced 4th mlp-layer to reduce the dimension, but it showed bad performance
+# so I use FC layer instead
+W12 = tf.Variable(tf.random_normal([3072, 1024]),name="W12")
+W12 = W12 * math.sqrt(2) / (1024 * math.sqrt(3))
+b12 = tf.Variable(tf.random_normal([1024]),name="b12")
+b12 = b12 * math.sqrt(2) / 32.0
+L12 = tf.matmul(L11,W12)+b12
 
 # use FC to let output fits to the number of classes
 # and divide by sqrt(n/2) according to cs231n.stanford.edu
-W13 = tf.Variable(tf.random_normal([400,100]),name="W13")
-W13 = W13 * math.sqrt(2) / 200.0
+W13 = tf.Variable(tf.random_normal([1024,100]),name="W13")
+W13 = W13 * math.sqrt(2) / 320.0
 b13 = tf.Variable(tf.random_normal([100]),name="b13")
 b13 = b13 * math.sqrt(2) / 10.0
 L13 = tf.matmul(L12,W13)+b13
@@ -111,7 +118,7 @@ correct_prediction = tf.equal(tf.argmax(L13, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=L13,labels=y))
-optimizer = tf.train.AdamOptimizer(learning_rate=h).minimize(loss)
+optimizer = tf.train.GradientDescentOptimizer(learning_rate=h).minimize(loss)
 
 tf.add_to_collection("vars",W1)
 tf.add_to_collection("vars",W2)
@@ -124,6 +131,7 @@ tf.add_to_collection("vars",W10)
 tf.add_to_collection("vars",W11)
 tf.add_to_collection("vars",W12)
 tf.add_to_collection("vars",W13)
+tf.add_to_collection("vars",b12)
 tf.add_to_collection("vars",b13)
 
 saver = tf.train.Saver()
