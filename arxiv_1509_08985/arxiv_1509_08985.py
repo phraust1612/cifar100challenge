@@ -100,14 +100,13 @@ L11 = tf.reshape(L11, [-1,3072])
 
 # paper introduced 4th mlp-layer to reduce the dimension, but it showed bad performance
 # so I use FC layer instead
+# and divide by sqrt(n/2) according to cs231n.stanford.edu
 W12 = tf.Variable(tf.random_normal([3072, 1024]),name="W12")
 W12 = W12 * math.sqrt(2) / (1024 * math.sqrt(3))
 b12 = tf.Variable(tf.random_normal([1024]),name="b12")
 b12 = b12 * math.sqrt(2) / 32.0
 L12 = tf.matmul(L11,W12)+b12
 
-# use FC to let output fits to the number of classes
-# and divide by sqrt(n/2) according to cs231n.stanford.edu
 W13 = tf.Variable(tf.random_normal([1024,100]),name="W13")
 W13 = W13 * math.sqrt(2) / 320.0
 b13 = tf.Variable(tf.random_normal([100]),name="b13")
@@ -168,7 +167,7 @@ for i in range(epoch):
 		batch_y = np.eye(100)[batch_y]
 		batch_y.transpose()
 		c = sess.run(accuracy,feed_dict={x:batch_x,y:batch_y,tf_drop:1})
-		avg_acc += c/total_batch
+		avg_acc += c/test_batch
 	print('Accuracy:', avg_acc)
 	if last_acc>avg_acc and len(hlist)>0:
 		h = hlist.pop()
