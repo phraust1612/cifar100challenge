@@ -127,7 +127,7 @@ correct_prediction = tf.equal(tf.argmax(L13, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=L13,labels=y))
-optimizer = tf.train.AdamOptimizer(learning_rate=h).minimize(loss)
+optimizer = tf.train.GradientDescentOptimizer(learning_rate=h).minimize(loss)
 
 tf.add_to_collection("vars",W1)
 tf.add_to_collection("vars",W2)

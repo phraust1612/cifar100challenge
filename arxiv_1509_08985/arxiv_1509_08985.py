@@ -10,8 +10,14 @@ f.close()
 
 # Test model and check accuracy
 f=open("../data/test","rb")
-testdic=pickle.load(f,encoding="bytes")
+tmpdic=pickle.load(f,encoding="bytes")
 f.close()
+testdic = {}
+testdic[b'fine_labels'] = tmpdic[b'fine_labels'][:5000]
+testdic[b'data'] = tmpdic[b'data'][:5000]
+valdic = {}
+valdic[b'fine_labels'] = tmpdic[b'fine_labels'][5000:]
+valdic[b'data'] = tmpdic[b'data'][5000:]
 
 # learning rate decays as scheduled in hlist
 hlist=[0.0001, 0.0125]
@@ -45,7 +51,7 @@ L2 = tf.nn.conv2d(L1,W2,strides=[1,1,1,1],padding="SAME")
 L2 = tf.nn.relu(L2)
 
 # mlp-conv 1
-W3 = tf.Variable(tf.random_normal([1,1,192,96],stddev=0.5),name="W3")
+W3 = tf.Variable(tf.random_normal([1,1,192,192],stddev=0.5),name="W3")
 L3 = tf.nn.conv2d(L2, W3,strides=[1,1,1,1],padding="SAME")
 L3 = tf.nn.relu(L3)
 
@@ -56,7 +62,7 @@ L4 = mix_rate*L4_max + (1-mix_rate)*L4_avg
 L4 = tf.nn.dropout(L4,keep_prob=tf_drop)
 
 # standard conv layer 3
-W5 = tf.Variable(tf.random_normal([3,3,96,192],stddev=0.5),name="W5")
+W5 = tf.Variable(tf.random_normal([3,3,192,192],stddev=0.5),name="W5")
 L5 = tf.nn.conv2d(L4,W5,strides=[1,1,1,1],padding="SAME")
 L5 = tf.nn.relu(L5)
 
@@ -147,10 +153,12 @@ except:
 
 total_batch = int(len(dic[b'data'])/batch_size)
 test_batch = int(len(testdic[b'data'])/batch_size)
+val_batch = int(len(valdic[b'data'])/batch_size)
 last_acc = 0
 for i in range(epoch):
 	avg_loss = 0
 	avg_acc = 0
+    val_acc = 0
 	for j in range(total_batch):
 		batch_x = np.array(dic[b'data'][j*100:(j+1)*100])
 		batch_y = np.array(dic[b'fine_labels'][j*100:(j+1)*100])
@@ -161,6 +169,15 @@ for i in range(epoch):
 		saver.save(sess,default_savefile)
 		avg_loss += c/batch_size
 	print("epoch:",str(i+1),"loss=",str(avg_loss))
+
+    for j in range(val_batch):
+        batch_x = np.array(valdic[b'data'][j*100:(j+1)*100])
+        batch_y = np.array(valdic[b'fine_labels'][j*100:(j+1)*100])
+        batch_y = np.eye(100)[batch_y]
+        batch_y.transpose()
+        c = sess.run(accuracy,feed_dict={x:batch_x,y:batch_y,tf_drop:1})
+        val_acc += c/val_batch
+
 	for j in range(test_batch):
 		batch_x = np.array(testdic[b'data'][j*100:(j+1)*100])
 		batch_y = np.array(testdic[b'fine_labels'][j*100:(j+1)*100])
@@ -168,8 +185,9 @@ for i in range(epoch):
 		batch_y.transpose()
 		c = sess.run(accuracy,feed_dict={x:batch_x,y:batch_y,tf_drop:1})
 		avg_acc += c/test_batch
-	print('Accuracy:', avg_acc)
-	if last_acc>avg_acc and len(hlist)>0:
+
+	print('Test Accuracy:', 100*avg_acc, 'Validation Accuracy:', 100*val_acc)
+	if last_acc>val_acc and len(hlist)>0:
 		h = hlist.pop()
-	last_acc = avg_acc
+	last_acc = val_acc
 print("learning finished")
