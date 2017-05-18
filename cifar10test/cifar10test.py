@@ -44,7 +44,8 @@ x=tf.placeholder(tf.float32,[None,3072])
 y=tf.placeholder(tf.float32,[None,10])
 tf_drop = tf.placeholder(tf.float32)
 x_img = tf.reshape(x,[-1,3,32,32])
-x_img = tf.transpose(x_img,perm=[1,2,0])
+x_img = tf.transpose(x_img,perm=[0,2,3,1])
+
 
 # standard conv layer 1
 # weight initial state : gaussian distribution with standard deviation 0.5
