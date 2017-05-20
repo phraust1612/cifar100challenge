@@ -105,22 +105,15 @@ W11 = tf.Variable(tf.random_normal([1,1,256,256],stddev=0.5),name="W11")
 L11 = tf.nn.conv2d(L10,W11,strides=[1,1,1,1],padding="SAME")
 L11 = tf.nn.relu(L11)
 
-# paper introduced 4th mlp-conv layer to reduce dimension but it showed bad performance
-#W12 = tf.Variable(tf.random_normal([1,1,256,16],stddev=0.5),name="W12")
-#L12 = tf.nn.conv2d(L11,W12,strides=[1,1,1,1],padding="SAME")
-#L12 = tf.nn.relu(L12)
-L11 = tf.reshape(L11, [-1,4096])
+# mlp-conv layer 4 to reduce dimension
+W12 = tf.Variable(tf.random_normal([1,1,256,10],stddev=0.5),name="W12")
+L12 = tf.nn.conv2d(L11,W12,strides=[1,1,1,1],padding="SAME")
+L12 = tf.nn.relu(L12)
+L12 = tf.reshape(L12, [-1,160])
 
-# so I used FC instead
-# and divide by sqrt(n/2) according to cs231n.stanford.edu
-W12 = tf.Variable(tf.random_normal([4096,1024]),name="W12")
-W12 = W12 * math.sqrt(2) / 2048.0
-b12 = tf.Variable(tf.random_normal([1024]),name="b12")
-b12 = b12 * math.sqrt(2) / 32.0
-L12 = tf.matmul(L11,W12)+b12
-
-W13 = tf.Variable(tf.random_normal([1024,10]),name="W13")
-W13 = W13 / (math.sqrt(5) * 32.0)
+# final FC layer
+W13 = tf.Variable(tf.random_normal([160,10]),name="W13")
+W13 = W13 / 40.0
 b13 = tf.Variable(tf.random_normal([10]),name="b13")
 b13 = b13 / math.sqrt(5)
 L13 = tf.matmul(L12,W13)+b13
@@ -129,7 +122,7 @@ correct_prediction = tf.equal(tf.argmax(L13, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=L13,labels=y))
-optimizer = tf.train.GradientDescentOptimizer(learning_rate=h).minimize(loss)
+optimizer = tf.train.AdagradOptimizer(learning_rate=h).minimize(loss)
 
 tf.add_to_collection("vars",W1)
 tf.add_to_collection("vars",W2)
@@ -142,7 +135,6 @@ tf.add_to_collection("vars",W10)
 tf.add_to_collection("vars",W11)
 tf.add_to_collection("vars",W12)
 tf.add_to_collection("vars",W13)
-tf.add_to_collection("vars",b12)
 tf.add_to_collection("vars",b13)
 
 saver = tf.train.Saver()
