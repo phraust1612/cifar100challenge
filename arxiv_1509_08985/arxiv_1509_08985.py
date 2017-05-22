@@ -104,7 +104,7 @@ L11 = tf.nn.relu(L11)
 # mlp-conv layer 4 to reduce dimension
 W12 = tf.Variable(tf.random_normal([1,1,192,100],stddev=0.5),name="W12")
 L12 = tf.nn.conv2d(L11,W12,strides=[1,1,1,1],padding="SAME")
-L12 = tf.nn.relu(L12)
+#L12 = tf.nn.relu(L12)
 
 # 4x4 global vote (average pooling) instead of FC
 L13 = tf.nn.avg_pool(L12,ksize=[1,4,4,1],strides=[1,4,4,1],padding="SAME")

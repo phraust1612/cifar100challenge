@@ -96,32 +96,32 @@ for i in range(epoch):
 	avg_acc = 0
 	val_acc=0
 	for j in range(total_batch):
-		batch_x = np.array(dic1[b'data'][j*100:(j+1)*100])
-		batch_y = np.array(dic1[b'labels'][j*100:(j+1)*100])
+		batch_x = np.array(dic1[b'data'][j*batch_size:(j+1)*batch_size])
+		batch_y = np.array(dic1[b'labels'][j*batch_size:(j+1)*batch_size])
 		batch_y = np.eye(10)[batch_y]
 		batch_y.transpose()
 		tmpdic = {x:batch_x,y:batch_y}
 		c,_ = sess.run([loss,optimizer],feed_dict=tmpdic)
 		avg_loss += c/batch_size
 	for j in range(total_batch):
-		batch_x = np.array(dic2[b'data'][j*100:(j+1)*100])
-		batch_y = np.array(dic2[b'labels'][j*100:(j+1)*100])
+		batch_x = np.array(dic2[b'data'][j*batch_size:(j+1)*batch_size])
+		batch_y = np.array(dic2[b'labels'][j*batch_size:(j+1)*batch_size])
 		batch_y = np.eye(10)[batch_y]
 		batch_y.transpose()
 		tmpdic = {x:batch_x,y:batch_y}
 		c,_ = sess.run([loss,optimizer],feed_dict=tmpdic)
 		avg_loss += c/batch_size
 	for j in range(total_batch):
-		batch_x = np.array(dic3[b'data'][j*100:(j+1)*100])
-		batch_y = np.array(dic3[b'labels'][j*100:(j+1)*100])
+		batch_x = np.array(dic3[b'data'][j*batch_size:(j+1)*batch_size])
+		batch_y = np.array(dic3[b'labels'][j*batch_size:(j+1)*batch_size])
 		batch_y = np.eye(10)[batch_y]
 		batch_y.transpose()
 		tmpdic = {x:batch_x,y:batch_y}
 		c,_ = sess.run([loss,optimizer],feed_dict=tmpdic)
 		avg_loss += c/batch_size
 	for j in range(total_batch):
-		batch_x = np.array(dic4[b'data'][j*100:(j+1)*100])
-		batch_y = np.array(dic4[b'labels'][j*100:(j+1)*100])
+		batch_x = np.array(dic4[b'data'][j*batch_size:(j+1)*batch_size])
+		batch_y = np.array(dic4[b'labels'][j*batch_size:(j+1)*batch_size])
 		batch_y = np.eye(10)[batch_y]
 		batch_y.transpose()
 		tmpdic = {x:batch_x,y:batch_y}
@@ -131,8 +131,8 @@ for i in range(epoch):
 
 	print("epoch:",str(i+1),"loss=",str(avg_loss),"h=",h)
 	for j in range(total_batch):
-		batch_x = np.array(dic5[b'data'][j*100:(j+1)*100])
-		batch_y = np.array(dic5[b'labels'][j*100:(j+1)*100])
+		batch_x = np.array(dic5[b'data'][j*batch_size:(j+1)*batch_size])
+		batch_y = np.array(dic5[b'labels'][j*batch_size:(j+1)*batch_size])
 		batch_y = np.eye(10)[batch_y]
 		batch_y.transpose()
 		tmpdic = {x:batch_x,y:batch_y}
@@ -140,8 +140,8 @@ for i in range(epoch):
 		val_acc += c/batch_size
 
 	for j in range(test_batch):
-		batch_x = np.array(testdic[b'data'][j*100:(j+1)*100])
-		batch_y = np.array(testdic[b'labels'][j*100:(j+1)*100])
+		batch_x = np.array(testdic[b'data'][j*batch_size:(j+1)*batch_size])
+		batch_y = np.array(testdic[b'labels'][j*batch_size:(j+1)*batch_size])
 		batch_y = np.eye(10)[batch_y]
 		batch_y.transpose()
 		c = sess.run(accuracy,feed_dict={x:batch_x,y:batch_y})
