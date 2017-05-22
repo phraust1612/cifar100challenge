@@ -106,17 +106,14 @@ L11 = tf.nn.conv2d(L10,W11,strides=[1,1,1,1],padding="SAME")
 L11 = tf.nn.relu(L11)
 
 # mlp-conv layer 4 to reduce dimension
-W12 = tf.Variable(tf.random_normal([1,1,256,10],stddev=0.5),name="W12")
+W12 = tf.Variable(tf.random_normal([1,1,256,40],stddev=0.5),name="W12")
 L12 = tf.nn.conv2d(L11,W12,strides=[1,1,1,1],padding="SAME")
 L12 = tf.nn.relu(L12)
-L12 = tf.reshape(L12, [-1,160])
+L12 = tf.reshape(L12, [-1,8,8,10])
 
-# final FC layer
-W13 = tf.Variable(tf.random_normal([160,10]),name="W13")
-W13 = W13 / 40.0
-b13 = tf.Variable(tf.random_normal([10]),name="b13")
-b13 = b13 / math.sqrt(5)
-L13 = tf.matmul(L12,W13)+b13
+# 8x8 global vote (average pooling) instead of FC
+L13 = tf.nn.avg_pool(L12,ksize=[1,8,8,1],strides=[1,8,8,1],padding="SAME")
+L13 = tf.reshape(L13,[-1,10])
 
 correct_prediction = tf.equal(tf.argmax(L13, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
@@ -134,8 +131,6 @@ tf.add_to_collection("vars",W9)
 tf.add_to_collection("vars",W10)
 tf.add_to_collection("vars",W11)
 tf.add_to_collection("vars",W12)
-tf.add_to_collection("vars",W13)
-tf.add_to_collection("vars",b13)
 
 saver = tf.train.Saver()
 
@@ -157,24 +152,24 @@ for i in range(epoch):
 	val_acc = 0
 	avg_acc = 0
 	for j in range(total_batch):
-		batch_x = np.array(dic1[b'data'][j*batch_size:(j+1)*batch_size])
-		batch_y = np.array(dic1[b'labels'][j*batch_size:(j+1)*batch_size])
+		batch_x = np.array(dic1[b'data'][j*100:(j+1)*100])
+		batch_y = np.array(dic1[b'labels'][j*100:(j+1)*100])
 		batch_y = np.eye(10)[batch_y]
 		batch_y.transpose()
 		tmpdic = {x:batch_x,y:batch_y,tf_drop:drop_rate}
 		c,_ = sess.run([loss,optimizer],feed_dict=tmpdic)
 		avg_loss += c/batch_size
 	for j in range(total_batch):
-		batch_x = np.array(dic2[b'data'][j*batch_size:(j+1)*batch_size])
-		batch_y = np.array(dic2[b'labels'][j*batch_size:(j+1)*batch_size])
+		batch_x = np.array(dic2[b'data'][j*100:(j+1)*100])
+		batch_y = np.array(dic2[b'labels'][j*100:(j+1)*100])
 		batch_y = np.eye(10)[batch_y]
 		batch_y.transpose()
 		tmpdic = {x:batch_x,y:batch_y,tf_drop:drop_rate}
 		c,_ = sess.run([loss,optimizer],feed_dict=tmpdic)
 		avg_loss += c/batch_size
 	for j in range(total_batch):
-		batch_x = np.array(dic3[b'data'][j*batch_size:(j+1)*batch_size])
-		batch_y = np.array(dic3[b'labels'][j*batch_size:(j+1)*batch_size])
+		batch_x = np.array(dic3[b'data'][j*100:(j+1)*100])
+		batch_y = np.array(dic3[b'labels'][j*100:(j+1)*100])
 		batch_y = np.eye(10)[batch_y]
 		batch_y.transpose()
 		tmpdic = {x:batch_x,y:batch_y,tf_drop:drop_rate}

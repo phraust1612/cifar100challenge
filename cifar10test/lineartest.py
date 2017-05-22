@@ -45,14 +45,14 @@ y=tf.placeholder(tf.float32,[None,10])
 
 # use FC for each layer
 # and divide by sqrt(n/2) according to cs231n.stanford.edu
-W11 = tf.Variable(tf.random_normal([3072,400]),name="W11")
-W11 = W11 * math.sqrt(6) / 640.0
-b11 = tf.Variable(tf.random_normal([400]),name="b11")
-b11 = b11 * math.sqrt(2) / 20.0
+W11 = tf.Variable(tf.random_normal([3072,1024]),name="W11")
+W11 = W11 * math.sqrt(2) / (math.sqrt(3) * 1024.0)
+b11 = tf.Variable(tf.random_normal([1024]),name="b11")
+b11 = b11 * math.sqrt(2) / 32.0
 L11 = tf.matmul(x,W11)+b11
 
-W12 = tf.Variable(tf.random_normal([400,100]),name="W12")
-W12 = W12 * math.sqrt(2) / 200.0
+W12 = tf.Variable(tf.random_normal([1024,100]),name="W12")
+W12 = W12 * math.sqrt(2) / 320.0
 b12 = tf.Variable(tf.random_normal([100]),name="b12")
 b12 = b12 * math.sqrt(2) / 10.0
 L12 = tf.matmul(L11,W12)+b12
@@ -67,7 +67,7 @@ correct_prediction = tf.equal(tf.argmax(L13, 1), tf.argmax(y, 1))
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=L13,labels=y))
-optimizer = tf.train.AdamOptimizer(learning_rate=h).minimize(loss)
+optimizer = tf.train.GradientDescentOptimizer(learning_rate=h).minimize(loss)
 
 tf.add_to_collection("vars",W11)
 tf.add_to_collection("vars",b11)
@@ -96,32 +96,32 @@ for i in range(epoch):
 	avg_acc = 0
 	val_acc=0
 	for j in range(total_batch):
-		batch_x = np.array(dic1[b'data'][j*batch_size:(j+1)*batch_size])
-		batch_y = np.array(dic1[b'labels'][j*batch_size:(j+1)*batch_size])
+		batch_x = np.array(dic1[b'data'][j*100:(j+1)*100])
+		batch_y = np.array(dic1[b'labels'][j*100:(j+1)*100])
 		batch_y = np.eye(10)[batch_y]
 		batch_y.transpose()
 		tmpdic = {x:batch_x,y:batch_y}
 		c,_ = sess.run([loss,optimizer],feed_dict=tmpdic)
 		avg_loss += c/batch_size
 	for j in range(total_batch):
-		batch_x = np.array(dic2[b'data'][j*batch_size:(j+1)*batch_size])
-		batch_y = np.array(dic2[b'labels'][j*batch_size:(j+1)*batch_size])
+		batch_x = np.array(dic2[b'data'][j*100:(j+1)*100])
+		batch_y = np.array(dic2[b'labels'][j*100:(j+1)*100])
 		batch_y = np.eye(10)[batch_y]
 		batch_y.transpose()
 		tmpdic = {x:batch_x,y:batch_y}
 		c,_ = sess.run([loss,optimizer],feed_dict=tmpdic)
 		avg_loss += c/batch_size
 	for j in range(total_batch):
-		batch_x = np.array(dic3[b'data'][j*batch_size:(j+1)*batch_size])
-		batch_y = np.array(dic3[b'labels'][j*batch_size:(j+1)*batch_size])
+		batch_x = np.array(dic3[b'data'][j*100:(j+1)*100])
+		batch_y = np.array(dic3[b'labels'][j*100:(j+1)*100])
 		batch_y = np.eye(10)[batch_y]
 		batch_y.transpose()
 		tmpdic = {x:batch_x,y:batch_y}
 		c,_ = sess.run([loss,optimizer],feed_dict=tmpdic)
 		avg_loss += c/batch_size
 	for j in range(total_batch):
-		batch_x = np.array(dic4[b'data'][j*batch_size:(j+1)*batch_size])
-		batch_y = np.array(dic4[b'labels'][j*batch_size:(j+1)*batch_size])
+		batch_x = np.array(dic4[b'data'][j*100:(j+1)*100])
+		batch_y = np.array(dic4[b'labels'][j*100:(j+1)*100])
 		batch_y = np.eye(10)[batch_y]
 		batch_y.transpose()
 		tmpdic = {x:batch_x,y:batch_y}
@@ -131,8 +131,8 @@ for i in range(epoch):
 
 	print("epoch:",str(i+1),"loss=",str(avg_loss),"h=",h)
 	for j in range(total_batch):
-		batch_x = np.array(dic5[b'data'][j*batch_size:(j+1)*batch_size])
-		batch_y = np.array(dic5[b'labels'][j*batch_size:(j+1)*batch_size])
+		batch_x = np.array(dic5[b'data'][j*100:(j+1)*100])
+		batch_y = np.array(dic5[b'labels'][j*100:(j+1)*100])
 		batch_y = np.eye(10)[batch_y]
 		batch_y.transpose()
 		tmpdic = {x:batch_x,y:batch_y}
@@ -140,8 +140,8 @@ for i in range(epoch):
 		val_acc += c/batch_size
 
 	for j in range(test_batch):
-		batch_x = np.array(testdic[b'data'][j*batch_size:(j+1)*batch_size])
-		batch_y = np.array(testdic[b'labels'][j*batch_size:(j+1)*batch_size])
+		batch_x = np.array(testdic[b'data'][j*100:(j+1)*100])
+		batch_y = np.array(testdic[b'labels'][j*100:(j+1)*100])
 		batch_y = np.eye(10)[batch_y]
 		batch_y.transpose()
 		c = sess.run(accuracy,feed_dict={x:batch_x,y:batch_y})
