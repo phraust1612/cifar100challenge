@@ -4,21 +4,7 @@ import numpy as np
 import pickle
 import tensorflow as tf
 
-f = open("../data/train","rb")
-dic = pickle.load(f,encoding="bytes")
-f.close()
-
-# Test model and check accuracy
-f=open("../data/test","rb")
-tmpdic=pickle.load(f,encoding="bytes")
-f.close()
-testdic = {}
-testdic[b'fine_labels'] = tmpdic[b'fine_labels'][:5000]
-testdic[b'data'] = tmpdic[b'data'][:5000]
-valdic = {}
-valdic[b'fine_labels'] = tmpdic[b'fine_labels'][5000:]
-valdic[b'data'] = tmpdic[b'data'][5000:]
-
+# belows are hyperparams
 # learning rate decays as scheduled in hlist
 hlist=[0.0001, 0.0125]
 h=0.025
@@ -26,7 +12,24 @@ epoch=100   #default epochs
 batch_size=200
 mix_rate = 0.5
 drop_rate = 0.5
+valrate = 0.1
 default_savefile = "model"
+
+f = open("../data/train","rb")
+tmpdic = pickle.load(f,encoding="bytes")
+f.close()
+
+f=open("../data/test","rb")
+testdic=pickle.load(f,encoding="bytes")
+f.close()
+
+dicsize = int(len(tmpdic[b'data']) * (1.0 - valrate))
+dic = {}
+dic[b'fine_labels'] = tmpdic[b'fine_labels'][:dicsize]
+dic[b'data'] = tmpdic[b'data'][:dicsize]
+valdic = {}
+valdic[b'fine_labels'] = tmpdic[b'fine_labels'][dicsize:]
+valdic[b'data'] = tmpdic[b'data'][dicsize:]
 
 # how to run : python3 (this python file name : arxiv~.py) (model name you set) (number of epochs you want)
 if len(sys.argv)>=2:
@@ -145,33 +148,33 @@ for i in range(epoch):
     avg_acc = 0
     val_acc = 0
     for j in range(total_batch):
-        batch_x = np.array(dic[b'data'][j*100:(j+1)*100])
-        batch_y = np.array(dic[b'fine_labels'][j*100:(j+1)*100])
+        batch_x = np.array(dic[b'data'][j*batch_size:(j+1)*batch_size])
+        batch_y = np.array(dic[b'fine_labels'][j*batch_size:(j+1)*batch_size])
         batch_y = np.eye(100)[batch_y]
         batch_y.transpose()
         tmpdic = {x:batch_x,y:batch_y,tf_drop:drop_rate}
         c,_ = sess.run([loss,optimizer],feed_dict=tmpdic)
         saver.save(sess,default_savefile)
         avg_loss += c/batch_size
-    print("epoch:",str(i+1),"loss=",str(avg_loss))
+    print("epoch:",str(i+1),"loss=",str(avg_loss),"h=",h)
 
     for j in range(val_batch):
-        batch_x = np.array(valdic[b'data'][j*100:(j+1)*100])
-        batch_y = np.array(valdic[b'fine_labels'][j*100:(j+1)*100])
+        batch_x = np.array(valdic[b'data'][j*batch_size:(j+1)*batch_size])
+        batch_y = np.array(valdic[b'fine_labels'][j*batch_size:(j+1)*batch_size])
         batch_y = np.eye(100)[batch_y]
         batch_y.transpose()
         c = sess.run(accuracy,feed_dict={x:batch_x,y:batch_y,tf_drop:1})
         val_acc += c/val_batch
 
     for j in range(test_batch):
-        batch_x = np.array(testdic[b'data'][j*100:(j+1)*100])
-        batch_y = np.array(testdic[b'fine_labels'][j*100:(j+1)*100])
+        batch_x = np.array(testdic[b'data'][j*batch_size:(j+1)*batch_size])
+        batch_y = np.array(testdic[b'fine_labels'][j*batch_size:(j+1)*batch_size])
         batch_y = np.eye(100)[batch_y]
         batch_y.transpose()
         c = sess.run(accuracy,feed_dict={x:batch_x,y:batch_y,tf_drop:1})
         avg_acc += c/test_batch
 
-    print('Test Accuracy:', 100*avg_acc, 'Validation Accuracy:', 100*val_acc)
+    print('Test Accuracy:', avg_acc, 'Validation Accuracy:', val_acc)
     if last_acc>val_acc and len(hlist)>0:
         h = hlist.pop()
     last_acc = val_acc
