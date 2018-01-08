@@ -98,7 +98,7 @@ with tf.Session () as sess:
 	    if last_acc>val_acc and len(hlist)>0:
 		    net.h = hlist.pop()
 	    last_acc = val_acc
-  except:
+  except KeyboardInterrupt:
     print ("stop learning")
   net.save (sess)
 
