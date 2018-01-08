@@ -3,25 +3,25 @@ import pickle
 import tensorflow as tf
 from resnet import Resnet
 
-f = open("data/data_batch_1","rb")
+f = open("../data/data_batch_1","rb")
 dic1 = pickle.load(f,encoding="bytes")
 f.close()
-f = open("data/data_batch_2","rb")
+f = open("../data/data_batch_2","rb")
 dic2 = pickle.load(f,encoding="bytes")
 f.close()
-f = open("data/data_batch_3","rb")
+f = open("../data/data_batch_3","rb")
 dic3 = pickle.load(f,encoding="bytes")
 f.close()
-f = open("data/data_batch_4","rb")
+f = open("../data/data_batch_4","rb")
 dic4 = pickle.load(f,encoding="bytes")
 f.close()
 # this will be used as validation set
-f = open("data/data_batch_5","rb")
+f = open("../data/data_batch_5","rb")
 dic5 = pickle.load(f,encoding="bytes")
 f.close()
 
 # Test model and check accuracy
-f=open("data/test_batch","rb")
+f=open("../data/test_batch","rb")
 testdic=pickle.load(f,encoding="bytes")
 f.close()
 
