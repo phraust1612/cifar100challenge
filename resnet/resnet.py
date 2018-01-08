@@ -10,7 +10,7 @@ class Resnet:
       initializer of Resnet-152
     """
     self.x = tf.placeholder (tf.float32, [None, 224, 224, 3])
-    self.y = tf.placeholder (tf.float32, [None, 3])
+    self.y = tf.placeholder (tf.float32, [None, 10])
     self.tf_drop = tf.placeholder (tf.float32)
     self.W = {}
     self.h = 0.025
@@ -145,7 +145,7 @@ class Resnet:
     l = ['5a','5b','5c']
     L = self.primary_cycle (L, l, 2)
 
-    L = tf.nn.max_pool (L, ksize=[1,7,7,1], strides=[1,1,1,1], padding="SAME")
+    L = tf.nn.avg_pool (L, ksize=[1,7,7,1], strides=[1,1,1,1], padding="VALID")
     L = tf.reshape (L, [-1, 2048])
     self.output = tf.matmul (L, self.W['fc10_0.npy']) + self.W['fc10_1.npy']
 
