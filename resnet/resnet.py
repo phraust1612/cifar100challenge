@@ -62,7 +62,7 @@ class Resnet:
       self.W['bn'+level+"_branch"+branch+level2+'_1.npy'],
       self.W['scale'+level+"_branch"+branch+level2+'_1.npy'],
       self.W['scale'+level+"_branch"+branch+level2+'_0.npy'],
-      self.W['bn'+level+"_branch"+branch+level2+'_2.npy'])
+      0.00001)
     if relu:
       L = tf.nn.relu (L)
     return L
@@ -121,7 +121,7 @@ class Resnet:
       self.W['bn_conv1_1.npy'], 
       self.W['scale_conv1_1.npy'],
       self.W['scale_conv1_0.npy'],
-      self.W['bn_conv1_2.npy'])
+      0.00001)
     L = tf.nn.relu (L)
     L = tf.nn.max_pool (L, ksize=[1,3,3,1], strides=[1,2,2,1], padding="SAME")
 
