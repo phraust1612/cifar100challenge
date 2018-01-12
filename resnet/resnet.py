@@ -1,3 +1,5 @@
+import scipy.misc
+import skimage.io as io
 import tensorflow as tf
 import numpy as np
 import os
@@ -157,6 +159,31 @@ class Resnet:
 
     correct_prediction = tf.equal(tf.argmax(self.output, 1), tf.argmax(self.y, 1))
     self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+  def get_class (self, sess, image):
+    """
+    get_class (sess, image):
+      guess the class of input image
+      <arguments>
+        sess : tensorflow session
+        image : numpy array of shape : (224, 224, 1)
+    """
+    if type (image) == list:
+      try:
+        image = np.array (image)
+      except:
+        return -1
+    if type (image) != np.ndarray:
+      return -1
+
+    if image.ndim < 3 or image.ndim > 3:
+      return -1
+    if image.shape != (224,224,3):
+      return -1
+
+    _feed = {self.x:image, self.tf_drop:1}
+    output = sess.run (self.output, feed_dict=_feed)
+    return tf.argmax (output, 1)
 
   def get_output (self, sess, image):
     """
