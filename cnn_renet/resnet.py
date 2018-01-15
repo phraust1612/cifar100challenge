@@ -1,45 +1,29 @@
-import scipy.misc
-import skimage.io as io
 import tensorflow as tf
 import numpy as np
 import os
+from net import Net
+from cnn_resnet.init_param import init_resnet
 
-class Resnet:
+class Resnet (Net):
 
-  def __init__ (self):
+  def __init__ (self, output:int, load:bool):
     """
     __init__ ():
       initializer of Resnet-152
     """
+    if output != 100 and output != 10:
+      raise ValueError ("output must be 10 or 100")
     self.x = tf.placeholder (tf.float32, [None, 224, 224, 3])
-    self.y = tf.placeholder (tf.float32, [None, 10])
+    self.y = tf.placeholder (tf.float32, [None, output])
     self.tf_drop = tf.placeholder (tf.float32)
-    self.W = {}
     self.h = 0.025
-    self.param_dir = "param_resnet/"
+    self.W = {}
+    self.param_dir = "cnn_resnet/param_resnet/"
     self.namelist = os.listdir(self.param_dir)
+    if load:
+      init_resnet (output)
     self.load ()
     self.build_net ()
-
-  def load (self):
-    """
-    load ():
-      load weight parameters from param/
-    """
-    for name in self.namelist:
-      nptmp = np.load (self.param_dir+name)
-      self.W[name] = tf.Variable (tf.convert_to_tensor(nptmp, name=name))
-
-  def save (self, sess):
-    """
-    save (sess):
-      save weight parameters
-      <arguments>
-        sess : tensorflow session
-    """
-    for name in self.namelist:
-      nptmp = sess.run (self.W[name])
-      np.save (self.param_dir+name, nptmp)
 
   def res_cycle (self, x, level, branch, level2, padding, relu, strides=1):
     """
@@ -64,7 +48,7 @@ class Resnet:
       self.W['bn'+level+"_branch"+branch+level2+'_1.npy'],
       self.W['scale'+level+"_branch"+branch+level2+'_1.npy'],
       self.W['scale'+level+"_branch"+branch+level2+'_0.npy'],
-      0.00001)
+      self.W['bn'+level+"_branch"+branch+level2+'_2.npy'])
     if relu:
       L = tf.nn.relu (L)
     return L
@@ -123,7 +107,7 @@ class Resnet:
       self.W['bn_conv1_1.npy'], 
       self.W['scale_conv1_1.npy'],
       self.W['scale_conv1_0.npy'],
-      0.00001)
+      self.W['bn_conv1_2.npy'])
     L = tf.nn.relu (L)
     L = tf.nn.max_pool (L, ksize=[1,3,3,1], strides=[1,2,2,1], padding="SAME")
 
@@ -149,7 +133,7 @@ class Resnet:
 
     L = tf.nn.avg_pool (L, ksize=[1,7,7,1], strides=[1,1,1,1], padding="VALID")
     L = tf.reshape (L, [-1, 2048])
-    self.output = tf.matmul (L, self.W['fc10_0.npy']) + self.W['fc10_1.npy']
+    self.output = tf.matmul (L, self.W['fc_0.npy']) + self.W['fc_1.npy']
 
     # you may use SVM or softmax classifier here
     self.loss = tf.reduce_mean (tf.nn.softmax_cross_entropy_with_logits
@@ -159,62 +143,3 @@ class Resnet:
 
     correct_prediction = tf.equal(tf.argmax(self.output, 1), tf.argmax(self.y, 1))
     self.accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
-  def get_class (self, sess, image):
-    """
-    get_class (sess, image):
-      guess the class of input image
-      <arguments>
-        sess : tensorflow session
-        image : numpy array of shape : (224, 224, 1)
-    """
-    if type (image) == list:
-      try:
-        image = np.array (image)
-      except:
-        return -1
-    if type (image) != np.ndarray:
-      return -1
-
-    if image.ndim < 3 or image.ndim > 3:
-      return -1
-    if image.shape != (224,224,3):
-      return -1
-
-    _feed = {self.x:image, self.tf_drop:1}
-    output = sess.run (self.output, feed_dict=_feed)
-    return tf.argmax (output, 1)
-
-  def get_output (self, sess, image):
-    """
-    get_output (sess, image):
-      apply resnet and take the score function
-      <arguments>
-        sess : tensorflow session
-        image : numpy array of shape : (224, 224, 1)
-    """
-    _feed = {self.x:image, self.tf_drop:1}
-    return sess.run (self.output, feed_dict=_feed)
-
-  def get_accuracy (self, sess, feed):
-    """
-    get_output (sess, image):
-      test resnet and take the accuracy
-      <arguments>
-        sess : tensorflow session
-        feed : dict {'x', 'y'}
-    """
-    _feed = {self.x:feed['x'], self.y:feed['y'], self.tf_drop:1}
-    return sess.run (self.accuracy, feed_dict=_feed)
-
-  def train_param (self, sess, feed):
-    """
-    train_param (sess, feed):
-      train and return loss
-      <arguments>
-        sess : tensorflow session
-        feed : dict {'x', 'y', 'drop'}
-    """
-    _feed = {self.x:feed['x'], self.y:feed['y'], self.tf_drop:feed['drop']}
-    c,_ = sess.run([self.loss, self.train], feed_dict=_feed)
-    return c

@@ -1,4 +1,7 @@
 data/
+cnn_renet/ResNet-152-model.caffemodel
 checkpoint
 *.meta
 *.index
+*/__pycache__/
+__pycache__/
